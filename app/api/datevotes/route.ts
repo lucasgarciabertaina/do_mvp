@@ -7,31 +7,35 @@ import { NextRequest } from 'next/server';
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const createExpenseSchema = z.object({
-  description: z.string().min(1),
-  amount: z.coerce.number().positive(),
+const createVoteSchema = z.object({
+  dateOptionId: z.string().min(1),
   eventId: z.string().min(1),
 })
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('HEADERS:', Object.fromEntries(request.headers.entries()));
     const user = await getCurrentUser()
-    console.log("Current User:", user)
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
-    console.log("Request Body:", body)
-    const { description, amount, eventId } = createExpenseSchema.parse(body)
+    const { eventId, dateOptionId } = createVoteSchema.parse(body)
 
   
-    const expense = await prisma.expense.create({
-      data: {
-        description,
+    const vote = await prisma.dateVote.upsert({
+      where: {
+        eventId_userId: {
+          eventId,
+          userId: user.userId,
+        },
+      },
+      update: {
+        dateOptionId,
+      },
+      create: {
         eventId,
-        amount,            
+        dateOptionId,
         userId: user.userId,
       },
       include: {
@@ -39,14 +43,13 @@ export async function POST(request: NextRequest) {
       },
     })
     return NextResponse.json({
-      id: expense.id,
-      eventId: expense.eventId,
-      userId: expense.userId,
-      description: expense.description,
-      amount: Number(expense.amount),
-      createdAt: expense.createdAt,
-      updatedAt: expense.updatedAt,
-      user: expense.user ? { name: expense.user.name ?? null } : null,
+      id: vote.id,
+      eventId: vote.eventId,
+      userId: vote.userId,
+      dateOptionId: vote.dateOptionId,
+      createdAt: vote.createdAt,
+      updatedAt: vote.updatedAt,
+      user: vote.user ? { name: vote.user.name ?? null } : null,
     })
   } catch (e) {
     console.error(e)

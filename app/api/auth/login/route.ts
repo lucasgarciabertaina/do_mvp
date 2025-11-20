@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { setAuthCookie } from '@/lib/auth'
 import { mockUsers } from '@/lib/mockData'
+import prisma from '@/lib/prisma'
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,8 +17,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Find user in mock data
-    const user = mockUsers.find(u => u.username === username)
+    const user = await prisma.user.findFirst({
+      where: { username }
+    })
     
     if (!user) {
       return NextResponse.json(
@@ -35,7 +39,8 @@ export async function POST(request: NextRequest) {
         name: user.name,
       }
     })
-  } catch {
+  } catch (error) {
+    console.error('Login error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

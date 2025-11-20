@@ -8,81 +8,148 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  username  String   @unique
-  password  String
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  ownedOccurrences Occurrence[] @relation("OccurrenceOwner")
-  memberships      Member[]
-  rsvps            RSVP[]
-  expenses         Expense[]
-  messages         Message[]
+  id            String             @id @default(cuid())
+  username      String             @unique
+  password      String
+  direction     String
+  name          String
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  // Relaciones (lados inversos)
+  messages      Message[]
+  expenses      Expense[]
+  eventsOwned   Event[]            @relation("EventOwner")
+  eventsBought  Event[]            @relation("EventBuyer")
+  reservations  Reservation[]
+  subscriptions PushSubscription[]
+  dateVotes     DateVote[]
 }
 
-model Member {
+model Event {
+  id             String        @id @default(cuid())
+  ownerId        String
+  buyerId        String? 
+  date           DateTime      @default(now()) // Fecha final del evento
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  // Relaciones
+  owner User @relation("EventOwner", fields: [ownerId], references: [id])
+  buyer User? @relation("EventBuyer", fields: [buyerId], references: [id]) 
+
+  expenses       Expense[]
+  messages       Message[]
+  reservations   Reservation[]
+  dateVotes      DateVote[]
+  
+  // **NUEVA RELACIÓN**: Opciones de fecha disponibles para este evento
+  dateOptions    DateOption[] 
+}
+
+// **NUEVO MODELO**
+// Almacena las fechas propuestas que los usuarios pueden votar
+model DateOption {
   id        String   @id @default(cuid())
+  date      DateTime // La fecha propuesta
+  
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id])
+  
+  // Votos que ha recibido esta opción de fecha
+  dateVotes DateVote[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Restricción: No se puede proponer la misma fecha dos veces para el mismo evento
+  @@unique([eventId, date]) 
+  @@index([eventId])
+}
+
+// **MODELO MODIFICADO**
+// El voto ahora se refiere a una opción de fecha (DateOption)
+model DateVote {
+  id        String   @id @default(cuid())
+  
+  // Referencia a la opción de fecha votada
+  dateOptionId String
+  dateOption   DateOption @relation(fields: [dateOptionId], references: [id])
+  
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id])
+  
   userId    String
-  name      String
+  user      User     @relation(fields: [userId], references: [id])
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  user User @relation(fields: [userId], references: [id])
+
+  // Restricción clave: Un usuario solo puede votar una vez por evento.
+  @@unique([eventId, userId], name: "eventId_userId")
+  @@index([dateOptionId])
+  @@index([eventId])
+  @@index([userId])
 }
 
-model Occurrence {
-  id        String   @id @default(cuid())
-  ownerId   String
-  date      DateTime
-  time      String
-  place     String
-  buyer     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  owner    User      @relation("OccurrenceOwner", fields: [ownerId], references: [id])
-  rsvps    RSVP[]
-  expenses Expense[]
-  messages Message[]
-}
-
-model RSVP {
-  id           String   @id @default(cuid())
-  occurrenceId String
-  userId       String
-  status       String   // "confirmed", "declined", "pending"
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
-  occurrence Occurrence @relation(fields: [occurrenceId], references: [id])
-  user       User       @relation(fields: [userId], references: [id])
-  
-  @@unique([occurrenceId, userId])
-}
 
 model Expense {
-  id           String   @id @default(cuid())
-  occurrenceId String
-  userId       String
-  description  String
-  amount       Float
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
-  occurrence Occurrence @relation(fields: [occurrenceId], references: [id])
-  user       User       @relation(fields: [userId], references: [id])
+  id          String   @id @default(cuid())
+  amount      Float
+  description String
+  eventId     String
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@index([eventId])
+  @@index([userId])
 }
 
 model Message {
-  id           String   @id @default(cuid())
-  occurrenceId String
-  userId       String
-  content      String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
-  occurrence Occurrence @relation(fields: [occurrenceId], references: [id])
-  user       User       @relation(fields: [userId], references: [id])
+  id        String   @id @default(cuid())
+  userId    String
+  eventId   String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@index([eventId])
+  @@index([userId])
+}
+
+model Reservation {
+  id        String   @id @default(cuid())
+  userId    String
+  eventId   String
+  status    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@index([eventId])
+  @@index([userId])
+  @@unique([eventId, userId])
+}
+
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user  User  @relation(fields: [userId], references: [id])
 }
