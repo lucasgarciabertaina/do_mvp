@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
-import { mockExpenses, mockUsers } from '@/lib/mockData'
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
 import { NextRequest } from 'next/server';

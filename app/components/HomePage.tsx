@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { mockOccurrences, mockUsers } from '@/lib/mockData' // Asegúrate de que esta ruta sea correcta
+import {  mockUsers } from '@/lib/mockData' // Asegúrate de que esta ruta sea correcta
 
 // --- INTERFACES ---
 interface Expense {
@@ -73,7 +73,7 @@ const nocache = (): RequestInit => ({
   headers: { 'Cache-Control': 'no-cache' },
 })
 
-const normalizeReservations = (list: any[]): Reservation[] =>
+const normalizeReservations = (list): Reservation[] =>
   list.map((r) => ({ ...r, status: String(r.status).toUpperCase() as ReservationStatus }))
 
 // Formatear una fecha ISO para la interfaz de usuario (ej: Mié. 20 Nov)
