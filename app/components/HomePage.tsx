@@ -539,7 +539,7 @@ export default function HomePage() {
 
     // --- DERIVADOS ---
     const rsvpsWithUsers = reservations.map((rsvp: Reservation) => {
-        const u: {name: styring} | User | undefined | null = rsvp.user || mockUsers.find((u: User) => u.id === rsvp.userId)
+        const u: {name: string} | User | undefined | null = rsvp.user || mockUsers.find((u: User) => u.id === rsvp.userId)
         return {
             ...rsvp,
             userName: u ? u.name : 'Usuario desconocido',
