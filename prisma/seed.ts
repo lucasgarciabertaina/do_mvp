@@ -1,6 +1,5 @@
 import 'dotenv/config'
 import { PrismaClient } from '@prisma/client'
-import { ReservationStatus } from '@prisma/client' // Importamos el enum (si está definido, si no, es String)
 
 const prisma = new PrismaClient()
 const FIRST_EVENT_ID = process.env.FIRST_EVENT_ID || 'default_event_id'
