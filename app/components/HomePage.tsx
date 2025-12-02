@@ -73,7 +73,7 @@ const nocache = (): RequestInit => ({
   headers: { 'Cache-Control': 'no-cache' },
 })
 
-const normalizeReservations = (list): Reservation[] =>
+const normalizeReservations = (list: Reservation[]): Reservation[]=>
   list.map((r) => ({ ...r, status: String(r.status).toUpperCase() as ReservationStatus }))
 
 // Formatear una fecha ISO para la interfaz de usuario (ej: Mié. 20 Nov)
